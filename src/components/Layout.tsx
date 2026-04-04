@@ -56,7 +56,7 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Contenido */}
+        {/* Content */}
         <main className="flex-1 overflow-y-auto w-full">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 py-8 h-full">
             {isLoading ? (
