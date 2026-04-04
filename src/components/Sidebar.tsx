@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, TrendingUp, CreditCard, UserCircle, PieChart, UsersRound, Receipt, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, TrendingUp, CreditCard, UserCircle, PieChart, UsersRound, Receipt, LogOut, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,7 +20,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full w-64 flex-col bg-surface border-r border-border shadow-sm z-10">
-      <div className="flex h-20 shrink-0 items-center px-6">
+      <div className="flex h-20 shrink-0 items-center justify-between px-6">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shadow-md shadow-primary-500/30">
             <span className="text-white font-black text-base font-display leading-none">B</span>
@@ -29,6 +29,15 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             Be <span className="text-primary-500">Böld</span>
           </h1>
         </div>
+        {onNavigate && (
+          <button
+            onClick={onNavigate}
+            className="md:hidden p-2 text-slate-400 hover:text-slate-700 rounded-xl"
+            style={{ touchAction: 'manipulation' }}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
       
       <div className="px-4 py-2">
