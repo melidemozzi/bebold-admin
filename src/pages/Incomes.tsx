@@ -30,9 +30,12 @@ export default function Incomes() {
 
   const handleImport = (parsedData: any[], period: string) => {
     const newRecords = parsedData.map((row, index) => {
-      const getVal = (key: string) => {
-        const found = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
-        return found ? row[found] : undefined;
+      const getVal = (...keys: string[]) => {
+        for (const key of keys) {
+          const found = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
+          if (found && row[found] !== undefined && row[found] !== '') return row[found];
+        }
+        return undefined;
       };
       return {
         id: Date.now() + index,
@@ -40,7 +43,7 @@ export default function Incomes() {
         client: getVal("cliente") || getVal("nombre") || "Desconocido",
         type: getVal("tipo") || "Sin facturar",
         method: getVal("metodo") || getVal("pago") || "Transferencia",
-        amount: parseInt(getVal("monto")) || parseInt(getVal("pesos")) || parseInt(getVal("total")) || 0,
+        amount: parseInt(getVal("monto actual", "actual")) || parseInt(getVal("monto")) || parseInt(getVal("pesos")) || parseInt(getVal("total")) || 0,
         status: "Subido"
       };
     }).filter(c => c.client !== "Desconocido" && c.client.toString().trim() !== "");
