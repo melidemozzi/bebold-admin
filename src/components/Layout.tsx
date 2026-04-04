@@ -38,7 +38,8 @@ export default function Layout() {
         <header className="h-16 flex items-center justify-between border-b border-border bg-surface px-4 shrink-0 shadow-sm" style={{ zIndex: 10 }}>
           <button
             onClick={() => setMobileOpen(true)}
-            className="md:hidden p-3 text-slate-500 rounded-lg"
+            className="md:hidden text-slate-500 rounded-lg"
+            style={{ padding: '12px', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             aria-label="Abrir menú"
           >
             <Menu className="w-6 h-6" />
