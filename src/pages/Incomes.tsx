@@ -28,9 +28,12 @@ export default function Incomes() {
 
   const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
 
-  const handleImport = (parsedData: any[], _period: string) => {
-    // El importer nuevo ya manda los datos mapeados con id, date, client, amount, type, method, status
+  const handleImport = (parsedData: any[], period: string) => {
     setIncomes(prev => [...prev, ...parsedData as any]);
+    // Cambiar la vista al mes importado
+    const [year, month] = period.split('-').map(Number);
+    setSelectedYear(year);
+    setSelectedMonth(month - 1);
   };
 
   const handleSave = () => {

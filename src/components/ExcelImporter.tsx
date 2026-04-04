@@ -24,6 +24,7 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
   // Mapeo manual de columnas
   const [colCliente, setColCliente] = useState('');
   const [colMonto, setColMonto] = useState('');
+  const [colCuit, setColCuit] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,10 +85,11 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
 
     // Auto-seleccionar columnas más probables
     const clienteCol = headers.find(h => h.toUpperCase().includes('CLIENTE') || h.toUpperCase().includes('NOMBRE')) || '';
-    // Para monto: priorizar "ACTUAL" sobre "EN $"
+    const cuitCol = headers.find(h => h.toUpperCase().includes('CUIT')) || '';
     const montoActual = headers.find(h => h.toUpperCase().includes('ACTUAL'));
     const montoGeneral = headers.find(h => h.toUpperCase().includes('MONTO'));
     setColCliente(clienteCol);
+    setColCuit(cuitCol);
     setColMonto(montoActual || montoGeneral || '');
   };
 
@@ -115,6 +117,7 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
       id: Date.now() + i,
       date: selectedPeriod + '-01',
       client: colCliente ? (row[colCliente] || 'Desconocido') : 'Desconocido',
+      cuit: colCuit ? (row[colCuit] || '') : '',
       amount: colMonto ? parseNum(row[colMonto]) : 0,
       type: 'Facturada',
       method: 'Transferencia',
@@ -186,12 +189,20 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
               {columns.length > 0 && (
                 <div className="bg-slate-50 border border-border rounded-xl p-4 space-y-3">
                   <p className="text-sm font-bold text-text-main">¿Cuál columna es cada dato?</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-text-muted mb-1.5">Columna CLIENTE</label>
                       <select value={colCliente} onChange={e => setColCliente(e.target.value)}
                         className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-300">
                         <option value="">— seleccionar —</option>
+                        {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-text-muted mb-1.5">Columna CUIT <span className="text-slate-400 normal-case">(opcional)</span></label>
+                      <select value={colCuit} onChange={e => setColCuit(e.target.value)}
+                        className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-300">
+                        <option value="">— no incluir —</option>
                         {columns.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
@@ -216,6 +227,7 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
                       <thead className="bg-slate-50 border-b border-border">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-semibold text-text-muted uppercase">Cliente</th>
+                          {colCuit && <th className="px-4 py-2 text-left text-xs font-semibold text-text-muted uppercase">CUIT</th>}
                           <th className="px-4 py-2 text-right text-xs font-semibold text-text-muted uppercase">Monto</th>
                         </tr>
                       </thead>
@@ -223,6 +235,7 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
                         {preview.map((row, i) => (
                           <tr key={i}>
                             <td className="px-4 py-2 text-slate-700">{row[colCliente]}</td>
+                            {colCuit && <td className="px-4 py-2 text-slate-500 font-mono text-xs">{row[colCuit]}</td>}
                             <td className="px-4 py-2 text-right font-semibold text-emerald-600">${parseNum(row[colMonto]).toLocaleString('es-AR')}</td>
                           </tr>
                         ))}
