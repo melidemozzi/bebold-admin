@@ -122,7 +122,7 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
       type: 'Facturada',
       method: 'Transferencia',
       status: 'Cobrado',
-    })).filter(r => r.client !== 'Desconocido' && r.client.toString().trim() !== '');
+    }).filter(r => r.client && r.client.toString().trim() !== '' && r.amount > 0);
 
     onImport(mapped, selectedPeriod);
     onClose();

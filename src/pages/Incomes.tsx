@@ -29,11 +29,15 @@ export default function Incomes() {
   const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
 
   const handleImport = (parsedData: any[], period: string) => {
+    if (parsedData.length === 0) {
+      alert('No se encontraron registros para importar. Verificá que las columnas estén bien seleccionadas.');
+      return;
+    }
     setIncomes(prev => [...prev, ...parsedData as any]);
-    // Cambiar la vista al mes importado
     const [year, month] = period.split('-').map(Number);
     setSelectedYear(year);
     setSelectedMonth(month - 1);
+    alert(`✓ Se importaron ${parsedData.length} registros para ${period}`);
   };
 
   const handleSave = () => {
