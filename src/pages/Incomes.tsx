@@ -28,26 +28,9 @@ export default function Incomes() {
 
   const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
 
-  const handleImport = (parsedData: any[], period: string) => {
-    const newRecords = parsedData.map((row, index) => {
-      const getVal = (...keys: string[]) => {
-        for (const key of keys) {
-          const found = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
-          if (found && row[found] !== undefined && row[found] !== '') return row[found];
-        }
-        return undefined;
-      };
-      return {
-        id: Date.now() + index,
-        date: period + '-01',
-        client: getVal("cliente") || getVal("nombre") || "Desconocido",
-        type: getVal("tipo") || "Sin facturar",
-        method: getVal("metodo") || getVal("pago") || "Transferencia",
-        amount: parseInt(getVal("monto actual", "actual")) || parseInt(getVal("monto")) || parseInt(getVal("pesos")) || parseInt(getVal("total")) || 0,
-        status: "Subido"
-      };
-    }).filter(c => c.client !== "Desconocido" && c.client.toString().trim() !== "");
-    setIncomes(prev => [...prev, ...newRecords]);
+  const handleImport = (parsedData: any[], _period: string) => {
+    // El importer nuevo ya manda los datos mapeados con id, date, client, amount, type, method, status
+    setIncomes(prev => [...prev, ...parsedData as any]);
   };
 
   const handleSave = () => {
