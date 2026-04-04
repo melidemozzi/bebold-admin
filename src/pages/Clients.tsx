@@ -28,30 +28,22 @@ export default function Clients() {
   };
 
   const handleImport = (parsedData: any[], period: string) => {
-    // Logic to transform raw excel rows into standard client rows matching mock format
-    const newClients = parsedData.map((row, index) => {
-      const getVal = (key: string) => {
-        const foundKey = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
-        return foundKey ? row[foundKey] : undefined;
-      };
-
-      return {
-        id: clients.length + index + 1,
-        name: getVal("cliente") || getVal("name") || getVal("nombre") || "Desconocido",
-        cuit: getVal("cuit") || "-",
-        country: getVal("país") || getVal("pais") || "Argentina",
-        currency: "ARS", // Por defecto siempre ARS salvo que se edite específico
-        responsible: getVal("responsable") || "Meli/Sofi",
-        status: "activo",
-        services: getVal("servicios") || getVal("servicio") || "-",
-        start_date: period + '-01', // Se ata a la fecha seleccionada en el importador
-        amount: parseInt(getVal("monto")) || parseInt(getVal("pesos")) || parseInt(getVal("usd")) || 0,
-        notes: "",
-        team: [] // Nuevo array para automatización de Fase 2
-      };
-    }).filter(c => c.name !== "Desconocido" && c.name.toString().trim() !== ""); // Ignore completely empty or unknown rows
-    
-    setClients([...clients, ...newClients]);
+    // El importer nuevo manda datos ya mapeados con client, cuit, amount
+    const newClients = parsedData.map((row: any, index: number) => ({
+      id: Date.now() + index,
+      name: row.client || '',
+      cuit: row.cuit || '',
+      country: 'Argentina',
+      currency: 'ARS',
+      responsible: 'Meli',
+      status: 'activo',
+      services: '',
+      start_date: period + '-01',
+      amount: row.amount || 0,
+      notes: '',
+      team: [],
+    })).filter((c: any) => c.name.trim() !== '');
+    setClients(prev => [...prev, ...newClients]);
   };
 
   // Generar un PDF resumen del cliente usando jsPDF
