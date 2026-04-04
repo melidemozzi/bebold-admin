@@ -113,20 +113,26 @@ export default function ExcelImporter({ isOpen, onClose, onImport }: ExcelImport
   };
 
   const handleConfirm = () => {
-    const mapped = rawJson.map((row, i) => ({
-      id: Date.now() + i,
-      date: selectedPeriod + '-01',
-      client: colCliente ? (row[colCliente] || 'Desconocido') : 'Desconocido',
-      cuit: colCuit ? (row[colCuit] || '') : '',
-      amount: colMonto ? parseNum(row[colMonto]) : 0,
-      type: 'Facturada',
-      method: 'Transferencia',
-      status: 'Cobrado',
-    })).filter(r => r.client && r.client.toString().trim() !== '' && r.amount > 0);
+    try {
+      alert(`rawJson tiene ${rawJson.length} filas. Cliente: "${colCliente}", Monto: "${colMonto}"`);
+      const mapped = rawJson.map((row, i) => ({
+        id: Date.now() + i,
+        date: selectedPeriod + '-01',
+        client: colCliente ? String(row[colCliente] || '') : '',
+        cuit: colCuit ? String(row[colCuit] || '') : '',
+        amount: colMonto ? parseNum(row[colMonto]) : 0,
+        type: 'Facturada',
+        method: 'Transferencia',
+        status: 'Cobrado',
+      })).filter(r => r.client.trim() !== '');
 
-    onImport(mapped, selectedPeriod);
-    onClose();
-    setFile(null); setWorkbook(null); setColumns([]); setColCliente(''); setColMonto('');
+      alert(`Después de mapear: ${mapped.length} registros`);
+      onImport(mapped, selectedPeriod);
+      onClose();
+      setFile(null); setWorkbook(null); setColumns([]); setColCliente(''); setColMonto(''); setColCuit('');
+    } catch(e: any) {
+      alert('Error: ' + e.message);
+    }
   };
 
   return (
