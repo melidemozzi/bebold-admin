@@ -188,7 +188,7 @@ export default function Clients() {
                 c.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                 (filterCountry === '' || c.country === filterCountry) &&
                 (filterResponsable === '' || c.responsible === filterResponsable)
-              ).map((client) => (
+              ).sort((a, b) => a.name.localeCompare(b.name)).map((client) => (
                 <tr key={client.id} className="hover:bg-primary-50/30 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-800">{client.name}</div>
@@ -260,45 +260,51 @@ export default function Clients() {
           <div className="bg-surface w-full max-w-lg rounded-2xl shadow-xl flex flex-col p-6">
             <h2 className="text-xl font-bold mb-4">Editar Cliente</h2>
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-600 mb-1 block">Nombre Resolutivo</label>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  value={editClient.name} 
-                  onChange={(e) => setEditClient({...editClient, name: e.target.value})} 
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Nombre / Empresa</label>
+                  <input type="text" className="input-field" value={editClient.name}
+                    onChange={e => setEditClient({...editClient, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">CUIT</label>
+                  <input type="text" className="input-field" value={editClient.cuit}
+                    placeholder="30-00000000-0"
+                    onChange={e => setEditClient({...editClient, cuit: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Responsable</label>
+                  <input type="text" className="input-field" value={editClient.responsible}
+                    onChange={e => setEditClient({...editClient, responsible: e.target.value})} />
+                </div>
                 <div>
                   <label className="text-sm font-semibold text-slate-600 mb-1 block">Moneda</label>
-                  <select 
-                    className="input-field" 
-                    value={editClient.currency} 
-                    onChange={(e) => setEditClient({...editClient, currency: e.target.value})}
-                  >
+                  <select className="input-field" value={editClient.currency}
+                    onChange={e => setEditClient({...editClient, currency: e.target.value})}>
                     <option value="ARS">Pesos (ARS)</option>
                     <option value="USD">Dólares (USD)</option>
                     <option value="EUR">Euros (EUR)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Monto a Cobrar / Cotización</label>
-                  <input 
-                    type="number" 
-                    className="input-field" 
-                    value={editClient.amount || ''} 
-                    onChange={(e) => setEditClient({...editClient, amount: Number(e.target.value)})} 
-                  />
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Monto a Cobrar</label>
+                  <input type="number" className="input-field"
+                    value={editClient.amount === 0 ? '' : editClient.amount}
+                    onChange={e => setEditClient({...editClient, amount: e.target.value === '' ? 0 : Number(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Responsable</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    value={editClient.responsible} 
-                    onChange={(e) => setEditClient({...editClient, responsible: e.target.value})} 
-                  />
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Servicios</label>
+                  <input type="text" className="input-field" value={editClient.services}
+                    onChange={e => setEditClient({...editClient, services: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-600 mb-1 block">Estado</label>
+                  <select className="input-field" value={editClient.status}
+                    onChange={e => setEditClient({...editClient, status: e.target.value})}>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="pausado">Pausado</option>
+                  </select>
                 </div>
               </div>
 

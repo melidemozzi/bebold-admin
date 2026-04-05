@@ -42,6 +42,7 @@ export interface Income {
   method: string;
   amount: number;
   status: string;
+  notes?: string;
 }
 
 export interface Expense {
@@ -52,6 +53,7 @@ export interface Expense {
   amount: number;
   method: string;
   isRecurrent: boolean;
+  notes?: string;
 }
 
 export interface Invoice {
