@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, DollarSign, Wallet2, CheckCircle2, Calendar, TrendingDown } from 'lucide-react';
+import { ArrowUpRight, DollarSign, Wallet2, Calendar, TrendingDown, Users } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export default function Dashboard() {
-  const { incomes, expenses, clients } = useAppContext();
+  const { incomes, expenses, clients, collaborators } = useAppContext();
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -30,7 +30,8 @@ export default function Dashboard() {
   const totalVentas = ingresosMes.reduce((acc, i) => acc + i.amount, 0);
   const totalCobrado = ingresosMes.filter(i => i.status === 'Cobrado').reduce((acc, i) => acc + i.amount, 0);
   const totalGastos = gastosMes.reduce((acc, e) => acc + e.amount, 0);
-  const ingresoNeto = totalCobrado - totalGastos;
+  const costoEquipo = collaborators.reduce((acc, c) => acc + c.baseSalary, 0);
+  const ingresoNeto = totalCobrado - totalGastos - costoEquipo;
 
   const porcentajeCobrado = totalVentas > 0 ? Math.round((totalCobrado / totalVentas) * 100) : 0;
   const porcentajePendiente = 100 - porcentajeCobrado;
@@ -49,21 +50,21 @@ export default function Dashboard() {
   const metrics = [
     {
       name: 'Ingresos Registrados', value: `$${totalVentas.toLocaleString()}`,
-      change: totalVentas > 0 ? '+activo' : '—', isPositive: true,
+      change: `${porcentajeCobrado}% cobrado`, isPositive: true,
       icon: DollarSign, color: 'text-primary-500', bg: 'bg-primary-50'
     },
     {
-      name: 'Efectivamente Cobrado', value: `$${totalCobrado.toLocaleString()}`,
-      change: `${porcentajeCobrado}%`, isPositive: porcentajeCobrado >= 70,
-      icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50'
-    },
-    {
-      name: 'Gastos del Mes', value: `$${totalGastos.toLocaleString()}`,
-      change: totalGastos > 0 ? '—' : 'Sin gastos', isPositive: false,
+      name: 'Gastos Operativos', value: `$${totalGastos.toLocaleString()}`,
+      change: totalGastos > 0 ? 'registrados' : 'sin gastos', isPositive: false,
       icon: Wallet2, color: 'text-orange-500', bg: 'bg-orange-50'
     },
     {
-      name: 'Ingreso Neto', value: `$${ingresoNeto.toLocaleString()}`,
+      name: 'Costo Equipo', value: `$${costoEquipo.toLocaleString()}`,
+      change: `${collaborators.length} colaboradores`, isPositive: false,
+      icon: Users, color: 'text-violet-500', bg: 'bg-violet-50'
+    },
+    {
+      name: 'Neto del Mes', value: `$${ingresoNeto.toLocaleString()}`,
       change: ingresoNeto >= 0 ? 'positivo' : 'negativo', isPositive: ingresoNeto >= 0,
       icon: ingresoNeto >= 0 ? ArrowUpRight : TrendingDown,
       color: ingresoNeto >= 0 ? 'text-blue-500' : 'text-red-500',
@@ -209,10 +210,11 @@ export default function Dashboard() {
             </div>
             {totalCobrado > 0 ? (
               <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">
-                Margen bruto actual:{' '}
-                <strong>{totalGastos > 0 ? Math.round(((totalCobrado - totalGastos) / totalCobrado) * 100) : 100}%</strong>.
-                {' '}Ingreso neto del mes:{' '}
-                <strong>${ingresoNeto.toLocaleString()}</strong>.
+                Cobrado:{' '}<strong>${totalCobrado.toLocaleString()}</strong>
+                {' '}— Gastos:{' '}<strong>${totalGastos.toLocaleString()}</strong>
+                {' '}— Equipo:{' '}<strong>${costoEquipo.toLocaleString()}</strong>
+                <br />Neto real:{' '}
+                <strong className={ingresoNeto >= 0 ? 'text-emerald-700' : 'text-red-600'}>${ingresoNeto.toLocaleString()}</strong>
               </p>
             ) : (
               <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">
