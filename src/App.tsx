@@ -8,6 +8,7 @@ import Expenses from './pages/Expenses';
 import Salaries from './pages/Salaries';
 import Collaborators from './pages/Collaborators';
 import Billing from './pages/Billing';
+import Caja from './pages/Caja';
 import Login from './pages/Login';
 import { useAuth } from './context/AuthContext';
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="incomes" element={<Incomes />} />
           <Route path="expenses" element={<Expenses />} />
           <Route path="salaries" element={<Salaries />} />
+          <Route path="caja" element={<Caja />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, DollarSign, Wallet2, Calendar, TrendingDown, Users } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { ArrowUpRight, DollarSign, Wallet2, Calendar, TrendingDown } from 'lucide-react';
+import { cn, fmt } from '../lib/utils';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,7 +31,8 @@ export default function Dashboard() {
   const totalCobrado = ingresosMes.filter(i => i.status === 'Cobrado').reduce((acc, i) => acc + i.amount, 0);
   const totalGastos = gastosMes.reduce((acc, e) => acc + e.amount, 0);
   const costoEquipo = collaborators.reduce((acc, c) => acc + c.baseSalary, 0);
-  const ingresoNeto = totalCobrado - totalGastos - costoEquipo;
+  const liquidezReal      = totalCobrado - totalGastos - costoEquipo;
+  const resultadoEsperado = totalVentas  - totalGastos - costoEquipo;
 
   const porcentajeCobrado = totalVentas > 0 ? Math.round((totalCobrado / totalVentas) * 100) : 0;
   const porcentajePendiente = 100 - porcentajeCobrado;
@@ -49,26 +50,28 @@ export default function Dashboard() {
 
   const metrics = [
     {
-      name: 'Ingresos Registrados', value: `$${totalVentas.toLocaleString()}`,
+      name: 'Ingresos Registrados', value: `$${fmt(totalVentas)}`,
       change: `${porcentajeCobrado}% cobrado`, isPositive: true,
       icon: DollarSign, color: 'text-primary-500', bg: 'bg-primary-50'
     },
     {
-      name: 'Gastos Operativos', value: `$${totalGastos.toLocaleString()}`,
-      change: totalGastos > 0 ? 'registrados' : 'sin gastos', isPositive: false,
+      name: 'Gastos + Equipo', value: `$${fmt(totalGastos + costoEquipo)}`,
+      change: `gastos + ${collaborators.length} colab.`, isPositive: false,
       icon: Wallet2, color: 'text-orange-500', bg: 'bg-orange-50'
     },
     {
-      name: 'Costo Equipo', value: `$${costoEquipo.toLocaleString()}`,
-      change: `${collaborators.length} colaboradores`, isPositive: false,
-      icon: Users, color: 'text-violet-500', bg: 'bg-violet-50'
+      name: 'Resultado Esperado', value: `$${fmt(resultadoEsperado)}`,
+      change: 'si se cobra todo', isPositive: resultadoEsperado >= 0,
+      icon: resultadoEsperado >= 0 ? ArrowUpRight : TrendingDown,
+      color: resultadoEsperado >= 0 ? 'text-emerald-500' : 'text-red-500',
+      bg: resultadoEsperado >= 0 ? 'bg-emerald-50' : 'bg-red-50'
     },
     {
-      name: 'Neto del Mes', value: `$${ingresoNeto.toLocaleString()}`,
-      change: ingresoNeto >= 0 ? 'positivo' : 'negativo', isPositive: ingresoNeto >= 0,
-      icon: ingresoNeto >= 0 ? ArrowUpRight : TrendingDown,
-      color: ingresoNeto >= 0 ? 'text-blue-500' : 'text-red-500',
-      bg: ingresoNeto >= 0 ? 'bg-blue-50' : 'bg-red-50'
+      name: 'Liquidez Real', value: `$${fmt(liquidezReal)}`,
+      change: 'cobrado − gastos − equipo', isPositive: liquidezReal >= 0,
+      icon: liquidezReal >= 0 ? ArrowUpRight : TrendingDown,
+      color: liquidezReal >= 0 ? 'text-blue-500' : 'text-red-500',
+      bg: liquidezReal >= 0 ? 'bg-blue-50' : 'bg-red-50'
     },
   ];
 
@@ -208,13 +211,12 @@ export default function Dashboard() {
               </div>
               <span className="font-bold text-primary-900">Rentabilidad</span>
             </div>
-            {totalCobrado > 0 ? (
+            {totalVentas > 0 ? (
               <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">
-                Cobrado:{' '}<strong>${totalCobrado.toLocaleString()}</strong>
-                {' '}— Gastos:{' '}<strong>${totalGastos.toLocaleString()}</strong>
-                {' '}— Equipo:{' '}<strong>${costoEquipo.toLocaleString()}</strong>
-                <br />Neto real:{' '}
-                <strong className={ingresoNeto >= 0 ? 'text-emerald-700' : 'text-red-600'}>${ingresoNeto.toLocaleString()}</strong>
+                Registrado: <strong>${fmt(totalVentas)}</strong><br />
+                Cobrado: <strong>${fmt(totalCobrado)}</strong> · Gastos: <strong>${fmt(totalGastos)}</strong> · Equipo: <strong>${fmt(costoEquipo)}</strong><br />
+                Resultado esperado: <strong className={resultadoEsperado >= 0 ? 'text-emerald-700' : 'text-red-600'}>${fmt(resultadoEsperado)}</strong><br />
+                Liquidez real: <strong className={liquidezReal >= 0 ? 'text-blue-700' : 'text-red-600'}>${fmt(liquidezReal)}</strong>
               </p>
             ) : (
               <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">

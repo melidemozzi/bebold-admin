@@ -59,13 +59,25 @@ export interface Expense {
 export interface Invoice {
   id: number;
   date: string;
-  numero: string;          // Número de comprobante ARCA
-  client: string;          // Nombre del cliente
+  numero: string;
+  client: string;
   amount: number;
   currency: string;
-  emisor: string;          // Qué monotributo lo emite (ej: "Meli", "Sofi")
+  emisor: string;
   status: 'pendiente' | 'emitida' | 'cobrada' | 'anulada';
   notes: string;
+}
+
+export const CAJA_ACCOUNTS = ['Cash $', 'Cash USD', 'Cuenta Meli', 'Cuenta Sofi'] as const;
+export type CajaAccount = typeof CAJA_ACCOUNTS[number];
+
+export interface CajaEntry {
+  id: number;
+  date: string;
+  account: CajaAccount;
+  type: 'entrada' | 'salida';
+  amount: number;
+  desc: string;
 }
 
 // --- MAPEOS DB ↔ APP ---
@@ -104,6 +116,13 @@ function mapInvoiceToDb(i: Invoice) {
   return { id: i.id, date: i.date, numero: i.numero, client: i.client, amount: i.amount, currency: i.currency, emisor: i.emisor, status: i.status, notes: i.notes };
 }
 
+function mapDbCaja(row: any): CajaEntry {
+  return { id: row.id, date: row.date ?? '', account: row.account ?? 'Cash $', type: row.type ?? 'entrada', amount: row.amount ?? 0, desc: row.description ?? '' };
+}
+function mapCajaToDb(e: CajaEntry) {
+  return { id: e.id, date: e.date, account: e.account, type: e.type, amount: e.amount, description: e.desc };
+}
+
 // --- DATOS INICIALES ---
 const INITIAL_CLIENTS: Client[] = [
   { id: 1, name: "Cyclo", cuit: "30-12345678-9", country: "Argentina", currency: "ARS", responsible: "Meli", status: "activo", services: "Brand Planning", start_date: "2026-04-01", amount: 450000, notes: "", team: [{ collaboratorName: 'FLOR', role: 'CM', feeType: 'Fixed', feeAmount: 120000 }, { collaboratorName: 'Sofi', role: 'Socia', feeType: 'Percentage', feeAmount: 10 }] },
@@ -136,6 +155,8 @@ interface AppContextType {
   setExpenses: Dispatch<SetStateAction<Expense[]>>;
   invoices: Invoice[];
   setInvoices: Dispatch<SetStateAction<Invoice[]>>;
+  cajaEntries: CajaEntry[];
+  setCajaEntries: Dispatch<SetStateAction<CajaEntry[]>>;
   isLoading: boolean;
 }
 
@@ -148,18 +169,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [incomes, setIncomesState] = useState<Income[]>([]);
   const [expenses, setExpensesState] = useState<Expense[]>([]);
   const [invoices, setInvoicesState] = useState<Invoice[]>([]);
+  const [cajaEntries, setCajaEntriesState] = useState<CajaEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const loadingRef = useRef(true);
 
   useEffect(() => {
     async function init() {
       try {
-        const [{ data: dbClients }, { data: dbCollaborators }, { data: dbIncomes }, { data: dbExpenses }, { data: dbInvoices }] = await Promise.all([
+        const [{ data: dbClients }, { data: dbCollaborators }, { data: dbIncomes }, { data: dbExpenses }, { data: dbInvoices }, { data: dbCaja }] = await Promise.all([
           supabase.from('clients').select('*').order('id'),
           supabase.from('collaborators').select('*').order('id'),
           supabase.from('incomes').select('*').order('id'),
           supabase.from('expenses').select('*').order('id'),
           supabase.from('invoices').select('*').order('id'),
+          supabase.from('caja_entries').select('*').order('id'),
         ]);
 
         if (!dbClients || dbClients.length === 0) { await supabase.from('clients').upsert(INITIAL_CLIENTS.map(mapClientToDb)); setClientsState(INITIAL_CLIENTS); }
@@ -175,6 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         else setExpensesState(dbExpenses.map(mapDbExpense));
 
         setInvoicesState(dbInvoices ? dbInvoices.map(mapDbInvoice) : []);
+        setCajaEntriesState(dbCaja ? dbCaja.map(mapDbCaja) : []);
 
       } catch (err) {
         console.error('Error Supabase:', err);
@@ -184,6 +208,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIncomesState(stored('bb_incomes', INITIAL_INCOMES));
         setExpensesState(stored('bb_expenses', INITIAL_EXPENSES));
         setInvoicesState(stored('bb_invoices', []));
+        setCajaEntriesState(stored('bb_caja_entries', []));
       } finally {
         loadingRef.current = false;
         setIsLoading(false);
@@ -216,9 +241,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setIncomes       = makeSetter(setIncomesState, 'incomes', mapIncomeToDb);
   const setExpenses      = makeSetter(setExpensesState, 'expenses', mapExpenseToDb);
   const setInvoices      = makeSetter(setInvoicesState, 'invoices', mapInvoiceToDb);
+  const setCajaEntries   = makeSetter(setCajaEntriesState, 'caja_entries', mapCajaToDb);
 
   return (
-    <AppContext.Provider value={{ clients, setClients, collaborators, setCollaborators, incomes, setIncomes, expenses, setExpenses, invoices, setInvoices, isLoading }}>
+    <AppContext.Provider value={{ clients, setClients, collaborators, setCollaborators, incomes, setIncomes, expenses, setExpenses, invoices, setInvoices, cajaEntries, setCajaEntries, isLoading }}>
       {children}
     </AppContext.Provider>
   );

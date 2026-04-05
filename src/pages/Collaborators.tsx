@@ -1,13 +1,48 @@
-import { useState } from 'react';
-import { PlusCircle, Pencil, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { PlusCircle, Pencil, Trash2, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import type { Collaborator } from '../context/AppContext';
-import { cn } from '../lib/utils';
+import { cn, fmt } from '../lib/utils';
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 export default function Collaborators() {
-  const { collaborators, setCollaborators } = useAppContext();
+  const { collaborators, setCollaborators, clients, incomes } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCollab, setEditingCollab] = useState<Collaborator | null>(null);
+
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+
+  function prevMonth() {
+    if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
+    else setSelectedMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
+    else setSelectedMonth(m => m + 1);
+  }
+  const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+
+  // Calcula honorario variable de un colaborador para el mes seleccionado
+  const calcVariableHonorario = useMemo(() => {
+    const monthIncomes = incomes.filter(i => i.date.startsWith(monthPrefix));
+    return (collabName: string): number => {
+      let total = 0;
+      clients.forEach(client => {
+        const member = client.team.find(m => m.collaboratorName === collabName);
+        if (!member) return;
+        if (member.feeType === 'Fixed') {
+          total += member.feeAmount;
+        } else if (member.feeType === 'Percentage') {
+          const clientIncome = monthIncomes.filter(i => i.client === client.name).reduce((a, i) => a + i.amount, 0);
+          total += (clientIncome * member.feeAmount) / 100;
+        }
+      });
+      return total;
+    };
+  }, [clients, incomes, monthPrefix]);
 
   const sorted = [...collaborators].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -42,16 +77,29 @@ export default function Collaborators() {
           <h1 className="text-2xl font-bold text-text-main font-display">Equipo</h1>
           <p className="text-text-muted mt-1 text-sm">Colaboradores y honorarios del estudio.</p>
         </div>
-        <button onClick={openNew} className="btn-primary flex items-center gap-2 text-sm shadow-md shadow-primary-500/20">
-          <PlusCircle className="w-4 h-4 text-white" /> Sumar Colaborador
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-surface border border-border rounded-xl px-2 py-1.5 shadow-sm">
+            <button onClick={prevMonth} className="p-1 text-slate-400 hover:text-primary-500 rounded-lg transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-semibold text-text-main px-2 min-w-[130px] text-center">
+              {MESES[selectedMonth]} {selectedYear}
+            </span>
+            <button onClick={nextMonth} className="p-1 text-slate-400 hover:text-primary-500 rounded-lg transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <button onClick={openNew} className="btn-primary flex items-center gap-2 text-sm shadow-md shadow-primary-500/20">
+            <PlusCircle className="w-4 h-4 text-white" /> Sumar Colaborador
+          </button>
+        </div>
       </div>
 
       {/* KPI */}
       <div className="grid grid-cols-2 gap-4">
         <div className="card p-5 border-l-4 border-l-violet-500 shadow-sm">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Costo Fijo Mensual</p>
-          <p className="text-2xl font-bold text-slate-800">${totalFijo.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-800">${fmt(totalFijo)}</p>
         </div>
         <div className="card p-5 border-l-4 border-l-slate-300 shadow-sm">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Colaboradores</p>
@@ -68,6 +116,7 @@ export default function Collaborators() {
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Rol</th>
                 <th className="px-4 py-3 text-right">Honorario Fijo</th>
+                <th className="px-4 py-3 text-right">A pagar ({MESES[selectedMonth]})</th>
                 <th className="px-4 py-3">Datos Bancarios</th>
                 <th className="px-4 py-3 text-center">Factura</th>
                 <th className="px-4 py-3 text-center">Acciones</th>
@@ -86,7 +135,15 @@ export default function Collaborators() {
                   </td>
                   <td className="px-4 py-3 text-slate-600">{collab.role}</td>
                   <td className="px-4 py-3 text-right font-semibold text-slate-800 whitespace-nowrap">
-                    {collab.baseSalary > 0 ? `$${collab.baseSalary.toLocaleString()}` : <span className="text-slate-400 font-normal text-xs">Por cliente</span>}
+                    {collab.baseSalary > 0 ? `$${fmt(collab.baseSalary)}` : <span className="text-slate-400 font-normal text-xs">Variable</span>}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {(() => {
+                      const honorario = collab.baseSalary > 0 ? collab.baseSalary : calcVariableHonorario(collab.name);
+                      return honorario > 0
+                        ? <span className="font-bold text-violet-600">${fmt(honorario)}</span>
+                        : <span className="text-slate-300 text-xs">—</span>;
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-slate-500 text-xs max-w-[200px] truncate">{collab.bankDetails || '—'}</td>
                   <td className="px-4 py-3 text-center">

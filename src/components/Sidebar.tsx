@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, TrendingUp, CreditCard, UserCircle, PieChart, UsersRound, Receipt, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, TrendingUp, CreditCard, UserCircle, PieChart, UsersRound, Receipt, LogOut, Landmark } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Ingresos', href: '/incomes', icon: TrendingUp },
   { name: 'Gastos', href: '/expenses', icon: CreditCard },
   { name: 'Sueldos', href: '/salaries', icon: UserCircle },
+  { name: 'Caja', href: '/caja', icon: Landmark },
 ];
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
