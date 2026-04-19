@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react';
-import { PlusCircle, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useAppContext } from '../context/AppContext';
-import type { Expense } from '../context/AppContext';
+import { useAppContext, CAJA_ACCOUNTS } from '../context/AppContext';
+import type { Expense, CajaAccount } from '../context/AppContext';
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 const EMPTY: Expense = { id: 0, date: '', desc: '', category: 'Variable', amount: 0, method: 'Transferencia', isRecurrent: false };
 
 export default function Expenses() {
-  const { expenses, setExpenses } = useAppContext();
+  const { expenses, setExpenses, setCajaEntries } = useAppContext();
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [cajaModal, setCajaModal] = useState<{ expense: Expense } | null>(null);
+  const [cajaAccount, setCajaAccount] = useState<CajaAccount>('Cuenta Meli');
 
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
@@ -39,12 +41,40 @@ export default function Expenses() {
     setEditExpense({ ...EMPTY, id: Date.now(), date: `${monthPrefix}-01` });
   }
 
+  function duplicarMesAnterior() {
+    const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+    const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+    const prevPrefix = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+    const prevExpenses = expenses.filter(e => e.date.startsWith(prevPrefix));
+    if (prevExpenses.length === 0) return;
+    const yaExisten = expenses.filter(e => e.date.startsWith(monthPrefix)).map(e => e.desc);
+    const nuevos = prevExpenses
+      .filter(e => !yaExisten.includes(e.desc))
+      .map(e => ({ ...e, id: Date.now() + Math.random() * 1000, date: `${monthPrefix}-01` }));
+    if (nuevos.length === 0) return;
+    setExpenses(prev => [...prev, ...nuevos as Expense[]]);
+  }
+
   function handleSave() {
     if (!editExpense || !editExpense.desc.trim() || editExpense.amount <= 0) return;
     const isNew = !expenses.some(e => e.id === editExpense.id);
     if (isNew) setExpenses(prev => [...prev, editExpense]);
     else setExpenses(prev => prev.map(e => e.id === editExpense.id ? editExpense : e));
+    if (isNew) setCajaModal({ expense: editExpense });
     setEditExpense(null);
+  }
+
+  function confirmCaja() {
+    if (!cajaModal) return;
+    setCajaEntries(prev => [...prev, {
+      id: Date.now(),
+      date: cajaModal.expense.date,
+      account: cajaAccount,
+      type: 'salida',
+      amount: cajaModal.expense.amount,
+      desc: cajaModal.expense.desc,
+    }]);
+    setCajaModal(null);
   }
 
   function handleDelete(id: number) {
@@ -72,6 +102,11 @@ export default function Expenses() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+          <button onClick={duplicarMesAnterior}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border border-border bg-surface text-text-muted hover:border-primary-300 hover:text-primary-600 transition-all"
+            title="Replicar gastos del mes anterior">
+            <Copy className="w-4 h-4" /> Replicar mes anterior
+          </button>
           <button onClick={openNew} className="btn-primary flex items-center gap-2 text-sm">
             <PlusCircle className="w-4 h-4 text-white" /> Nuevo Gasto
           </button>
@@ -146,6 +181,28 @@ export default function Expenses() {
           )}
         </div>
       </div>
+
+      {/* Modal Caja automática */}
+      {cajaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-surface w-full max-w-sm rounded-2xl shadow-xl p-6 animate-in zoom-in-95 duration-200">
+            <h2 className="text-lg font-bold text-slate-800 mb-1">¿Registrar en Caja?</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Gasto <strong>{cajaModal.expense.desc}</strong> por <strong>${cajaModal.expense.amount.toLocaleString()}</strong>
+            </p>
+            <div className="mb-5">
+              <label className="text-sm font-semibold text-slate-600 mb-1 block">¿De qué cuenta salió?</label>
+              <select className="input-field w-full" value={cajaAccount} onChange={e => setCajaAccount(e.target.value as CajaAccount)}>
+                {CAJA_ACCOUNTS.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setCajaModal(null)} className="btn-secondary flex-1">No registrar</button>
+              <button onClick={confirmCaja} className="btn-primary flex-1">Sí, registrar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {editExpense && (

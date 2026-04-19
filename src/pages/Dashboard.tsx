@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, DollarSign, Wallet2, Calendar, TrendingDown } from 'lucide-react';
+import { ArrowUpRight, DollarSign, Wallet2, Calendar, TrendingDown, FileSpreadsheet, Download } from 'lucide-react';
 import { cn, fmt } from '../lib/utils';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { exportMonthlyExcel, downloadTemplate } from '../lib/excelExport';
 
 // Nombres de meses en español
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -33,6 +34,9 @@ export default function Dashboard() {
   const costoEquipo = collaborators.reduce((acc, c) => acc + c.baseSalary, 0);
   const liquidezReal      = totalCobrado - totalGastos - costoEquipo;
   const resultadoEsperado = totalVentas  - totalGastos - costoEquipo;
+  const ganancia  = resultadoEsperado;
+  const reserva   = ganancia > 0 ? ganancia * 0.20 : 0;
+  const paraSocias = ganancia > 0 ? ganancia * 0.80 : 0;
 
   const porcentajeCobrado = totalVentas > 0 ? Math.round((totalCobrado / totalVentas) * 100) : 0;
   const porcentajePendiente = 100 - porcentajeCobrado;
@@ -90,6 +94,22 @@ export default function Dashboard() {
           </p>
         </div>
 
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportMonthlyExcel(prefijo, ingresosMes, gastosMes, collaborators)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-border bg-white text-slate-600 hover:border-primary-300 hover:text-primary-600 transition-all shadow-sm"
+            title="Descargar Excel del mes"
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Exportar mes
+          </button>
+          <button
+            onClick={() => downloadTemplate()}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-border bg-white text-slate-600 hover:border-primary-300 hover:text-primary-600 transition-all shadow-sm"
+            title="Descargar template para carga"
+          >
+            <Download className="w-4 h-4" /> Template
+          </button>
+        </div>
         <div className="flex items-center gap-3 bg-white p-2 border border-border shadow-sm rounded-xl">
           <Calendar className="w-5 h-5 text-slate-400 ml-1" />
           <select
@@ -139,6 +159,30 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Distribución de Ganancia */}
+      {ganancia !== 0 && (
+        <div>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Distribución de ganancia del período</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card p-5 border-l-4 border-l-violet-400 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ganancia Neta</p>
+              <p className={cn('text-2xl font-bold', ganancia >= 0 ? 'text-violet-600' : 'text-red-600')}>${fmt(ganancia)}</p>
+              <p className="text-xs text-slate-400 mt-1">ingresos − gastos − equipo</p>
+            </div>
+            <div className="card p-5 border-l-4 border-l-amber-400 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Reserva (20%)</p>
+              <p className="text-2xl font-bold text-amber-600">${fmt(reserva)}</p>
+              <p className="text-xs text-slate-400 mt-1">fondo de reserva</p>
+            </div>
+            <div className="card p-5 border-l-4 border-l-primary-400 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Para Socias (80%)</p>
+              <p className="text-2xl font-bold text-primary-600">${fmt(paraSocias)}</p>
+              <p className="text-xs text-slate-400 mt-1">distribución disponible</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
         {/* Gráfico */}

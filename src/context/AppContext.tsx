@@ -8,6 +8,7 @@ export interface TeamMember {
   role: string;
   feeType: 'Fixed' | 'Percentage' | 'One-Time';
   feeAmount: number;
+  fixedClientAmount?: number; // monto fijo asignado a este cliente (para colaboradores de honorario fijo)
 }
 
 export interface Client {
@@ -96,10 +97,10 @@ function mapClientToDb(c: Client) {
 }
 
 function mapDbIncome(row: any): Income {
-  return { id: row.id, date: row.date ?? '', client: row.client ?? '', type: row.type ?? '', method: row.method ?? '', amount: row.amount ?? 0, status: row.status ?? 'Pendiente' };
+  return { id: row.id, date: row.date ?? '', client: row.client ?? '', type: row.type ?? '', method: row.method ?? '', amount: row.amount ?? 0, status: row.status ?? 'Pendiente', notes: row.notes ?? '' };
 }
 function mapIncomeToDb(i: Income) {
-  return { id: i.id, date: i.date, client: i.client, type: i.type, method: i.method, amount: i.amount, status: i.status };
+  return { id: i.id, date: i.date, client: i.client, type: i.type, method: i.method, amount: i.amount, status: i.status, notes: i.notes ?? '' };
 }
 
 function mapDbExpense(row: any): Expense {
