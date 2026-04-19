@@ -193,14 +193,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
         {/* Gráfico */}
         <div className="lg:col-span-2 card p-6 shadow-sm border-transparent">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-text-main">Facturación · Ganancia · Reserva</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-text-main">Evolución mensual</h2>
             <button
               onClick={() => navigate('/reports')}
               className="text-sm font-medium text-primary-500 hover:text-primary-600"
             >
               Ver reporte completo
             </button>
+          </div>
+          <div className="flex items-center gap-4 mb-4">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#d946ef' }} /> Facturación
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#10b981' }} /> Ganancia
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <span className="w-3 h-3 rounded-sm inline-block" style={{ background: '#f59e0b' }} /> Reserva
+            </span>
           </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -255,25 +266,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-auto bg-primary-50 p-5 rounded-2xl border border-primary-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-primary-500 rounded-lg text-white">
-                <ArrowUpRight className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-primary-900">Rentabilidad</span>
-            </div>
-            {totalVentas > 0 ? (
-              <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">
-                Registrado: <strong>${fmt(totalVentas)}</strong><br />
-                Cobrado: <strong>${fmt(totalCobrado)}</strong> · Gastos: <strong>${fmt(totalGastos)}</strong> · Equipo: <strong>${fmt(costoEquipo)}</strong><br />
-                Resultado esperado: <strong className={resultadoEsperado >= 0 ? 'text-emerald-700' : 'text-red-600'}>${fmt(resultadoEsperado)}</strong><br />
-                Liquidez real: <strong className={liquidezReal >= 0 ? 'text-blue-700' : 'text-red-600'}>${fmt(liquidezReal)}</strong>
-              </p>
-            ) : (
-              <p className="text-sm text-primary-700 leading-relaxed mt-2 font-medium">
-                Sin ingresos registrados para este período.
-              </p>
-            )}
+          <div className="mt-auto bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm text-slate-500">
+            {totalVentas > 0
+              ? <><span className="font-semibold text-slate-700">{clientesActivos} cliente{clientesActivos !== 1 ? 's' : ''} activo{clientesActivos !== 1 ? 's' : ''}</span> · {porcentajeCobrado}% cobrado del total registrado</>
+              : 'Sin ingresos registrados para este período.'
+            }
           </div>
         </div>
       </div>
