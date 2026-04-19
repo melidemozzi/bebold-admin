@@ -46,11 +46,17 @@ export default function Dashboard() {
     return Array.from({ length: 6 }).map((_, i) => {
       const d = new Date(añoActual, mesActual - (5 - i), 1);
       const pref = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const ing = incomes.filter(x => x.date.startsWith(pref)).reduce((a, x) => a + x.amount, 0);
+      const facturacion = incomes.filter(x => x.date.startsWith(pref)).reduce((a, x) => a + x.amount, 0);
       const gst = expenses.filter(x => x.date.startsWith(pref)).reduce((a, x) => a + x.amount, 0);
-      return { month: MESES[d.getMonth()], Ingresos: ing, Gastos: gst };
+      const gan = facturacion - gst - costoEquipo;
+      return {
+        month: MESES[d.getMonth()],
+        'Facturación': facturacion,
+        'Ganancia': Math.max(0, gan),
+        'Reserva': gan > 0 ? Math.round(gan * 0.20) : 0,
+      };
     });
-  }, [incomes, expenses, mesActual, añoActual]);
+  }, [incomes, expenses, mesActual, añoActual, costoEquipo]);
 
   const metrics = [
     {
@@ -188,7 +194,7 @@ export default function Dashboard() {
         {/* Gráfico */}
         <div className="lg:col-span-2 card p-6 shadow-sm border-transparent">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-text-main">Evolución de Ingresos y Gastos</h2>
+            <h2 className="text-lg font-bold text-text-main">Facturación · Ganancia · Reserva</h2>
             <button
               onClick={() => navigate('/reports')}
               className="text-sm font-medium text-primary-500 hover:text-primary-600"
@@ -207,8 +213,9 @@ export default function Dashboard() {
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   formatter={(val) => [`$${Number(val).toLocaleString()}`]}
                 />
-                <Bar dataKey="Ingresos" fill="#d946ef" radius={[6, 6, 0, 0]} barSize={32} />
-                <Bar dataKey="Gastos" fill="#fbcfe8" radius={[6, 6, 0, 0]} barSize={32} />
+                <Bar dataKey="Facturación" fill="#d946ef" radius={[6, 6, 0, 0]} barSize={22} />
+                <Bar dataKey="Ganancia" fill="#10b981" radius={[6, 6, 0, 0]} barSize={22} />
+                <Bar dataKey="Reserva" fill="#f59e0b" radius={[6, 6, 0, 0]} barSize={22} />
               </BarChart>
             </ResponsiveContainer>
           </div>
