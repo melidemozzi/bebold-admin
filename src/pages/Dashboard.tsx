@@ -31,7 +31,18 @@ export default function Dashboard() {
   const totalVentas = ingresosMes.reduce((acc, i) => acc + i.amount, 0);
   const totalCobrado = ingresosMes.filter(i => i.status === 'Cobrado').reduce((acc, i) => acc + i.amount, 0);
   const totalGastos = gastosMes.reduce((acc, e) => acc + e.amount, 0);
-  const costoEquipo = collaborators.reduce((acc, c) => acc + c.baseSalary, 0);
+
+  // Costo real del equipo: fijos por baseSalary, variables por comisiones asignadas en clientes
+  const costoEquipo = useMemo(() => collaborators.reduce((total, collab) => {
+    if (collab.baseSalary > 0) return total + collab.baseSalary;
+    return total + clients.reduce((sum, client) => {
+      const m = client.team?.find(t => t.collaboratorName === collab.name);
+      if (!m) return sum;
+      if (m.feeType === 'Percentage' && m.feeAmount > 0) return sum + (client.amount * m.feeAmount) / 100;
+      if (m.feeType === 'One-Time' && m.feeAmount > 0) return sum + m.feeAmount;
+      return sum;
+    }, 0);
+  }, 0), [collaborators, clients]);
   const liquidezReal      = totalCobrado - totalGastos - costoEquipo;
   const resultadoEsperado = totalVentas  - totalGastos - costoEquipo;
   const ganancia  = resultadoEsperado;
